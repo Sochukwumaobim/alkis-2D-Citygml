@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.129/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.129/Build/Cesium/Widgets/widgets.css"
+        rel="stylesheet" />
+    <style>
+        #toggle-building {
+            z-index: 1;
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #toggle-shadows {
+            z-index: 1;
+            position: fixed;
+            top: 5px;
+            left: 150px;
+            padding: 8px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #color-by-function {
+            z-index: 1;
+            position: fixed;
+            top: 5px;
+            left: 295px;
+            padding: 8px 15px;
+            background-color: #9C27B0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #time-controls {
+            z-index: 1;
+            position: fixed;
+            top: 35px;
+            left: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #time-slider {
+            width: 200px;
+            margin-right: 10px;
+        }
+
+        #time-label {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #date-controls {
+            z-index: 1;
+            position: fixed;
+            top: 80px;
+            left: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #date-picker {
+            width: 150px;
+            padding: 5px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        #set-date {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* Updated Info Box Styles - Horizontal table layout */
+        #infoBox {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 0;
+            font-family: sans-serif;
+            font-size: 13px;
+            z-index: 1000;
+            border-top: 3px solid #4CAF50;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+            max-height: 35vh;
+            overflow-x: auto;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .info-header {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .info-content {
+            padding: 15px;
+        }
+
+        /* Horizontal table layout */
+        .horizontal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 800px;
+        }
+
+        .horizontal-table th {
+            background: #f5f5f5;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            font-weight: bold;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .horizontal-table td {
+            padding: 8px 12px;
+            border: 1px solid #eee;
+            background: white;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .horizontal-table tr:hover td {
+            background: #f9f9f9;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #search-container {
+            z-index: 1;
+            position: fixed;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #filter-controls {
+            z-index: 1;
+            position: fixed;
+            top: 130px;
+            left: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 300px;
+            border: 1px solid #ccc;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .filter-button {
+            padding: 8px 15px;
+            margin-right: 8px;
+            margin-bottom: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #clear-highlights,
+        #reset-filters {
+            background-color: #ff4444;
+        }
+
+        #search-input {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        #search-button {
+            padding: 8px 15px;
+            margin-left: 5px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #clear-highlights {
+            padding: 8px 15px;
+            margin-left: 5px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .highlighted-building {
+            color: red;
+            outline: 2px solid red;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .success-message {
+            color: #388e3c;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #e8f5e8;
+            border-radius: 4px;
+            border-left: 4px solid #388e3c;
+        }
+
+        .info-message {
+            color: #1976d2;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #1976d2;
+        }
+
+        #filter-controls h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Status indicator for highlights */
+        .highlight-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .highlight-active {
+            background-color: #ff4444;
+        }
+
+        .highlight-inactive {
+            background-color: #ccc;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Legend for building functions */
+        #function-legend {
+            z-index: 1;
+            position: fixed;
+            top: 130px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            max-width: 250px;
+            display: none;
+        }
+
+        #function-legend h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer" style="width:100%; height: 100vh;"></div>
+    <button id="toggle-building">Toggle custom buildings</button>
+    <button id="toggle-shadows">Toggle shadows</button>
+    <button id="color-by-function">Color by Function</button>
+
+    <div id="time-controls">
+        <input type="range" id="time-slider" min="0" max="24" step="0.1" value="12">
+        <span id="time-label">12:00</span>
+    </div>
+
+    <div id="date-controls">
+        <input type="date" id="date-picker">
+        <button id="set-date">Set Date</button>
+    </div>
+
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Enter LoD ID">
+        <button id="search-button">Search</button>
+        <button id="clear-highlights">Clear Highlights</button>
+    </div>
+
+    <div id="filter-controls">
+        <h3>Building Filters</h3>
+
+        <div class="filter-group">
+            <label for="function-filter">Building Function:</label>
+            <select id="function-filter" class="filter-input">
+                <option value="">All Functions</option>
+                <!-- Options will be populated dynamically from German function names -->
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Ground Area (m²):</label>
+            <input type="number" id="area-min" class="filter-input" min="0" step="10" placeholder="Minimum area">
+            <input type="number" id="area-max" class="filter-input" min="0" step="10" placeholder="Maximum area">
+        </div>
+
+        <div class="filter-group">
+            <label>Construction Year:</label>
+            <input type="number" id="year-min" class="filter-input" min="1800" max="2025" step="1"
+                placeholder="From year">
+            <input type="number" id="year-max" class="filter-input" min="1800" max="2025" step="1"
+                placeholder="To year">
+        </div>
+
+        <button id="apply-filters" class="filter-button">Apply Filters</button>
+        <button id="reset-filters" class="filter-button">Reset Filters</button>
+        <!-- Removed filter count display -->
+    </div>
+
+    <!-- Legend for building functions -->
+    <div id="function-legend">
+        <h4>Building Functions</h4>
+        <div id="legend-items">
+            <!-- Legend items will be populated dynamically -->
+        </div>
+    </div>
+
+    <!-- Updated Info Box as horizontal table at bottom -->
+    <div id="infoBox">
+        <div class="info-header">
+            <span>Building Information</span>
+            <button class="close-button" onclick="hideInfoBox()">×</button>
+        </div>
+        <div class="info-content">
+            <table class="horizontal-table">
+                <thead>
+                    <tr>
+                        <th>🏠 Function</th>
+                        <th>📍 Address</th>
+                        <th>📏 Ground Area</th>
+                        <th>🏗 Construction Date</th>
+                        <th>🆔 Parcel ID</th>
+                        <th>🏢 Building ID</th>
+                        <th>📐 Height</th>
+                        <th>📊 LoD ID</th>
+                        <th>🔗 Linked</th>
+                        <th>🛣 Street</th>
+                    </tr>
+                </thead>
+                <tbody id="attribute-table-body">
+                    <!-- Building rows will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZWVkNmFmZS01ZWI4LTQ5YTItOWVmMS1kZjNhMGFkZDRjMmYiLCJpZCI6Mjk1NzMzLCJpYXQiOjE3NDUxOTcxNDN9.4OckhGOlZtc9zsKcWXHg-WDMCoNmsO0EexfUfhtJEWY';
+
+        // Global variables to track highlighted features
+        window.currentHighlightedFeatures = [];
+        window.highlightedFeatureIds = new Set();
+        window.isColorByFunctionActive = false;
+
+        // Unique, distinct colors for each specific German building function
+        const functionColors = {
+            'Wohnhaus': Cesium.Color.fromCssColorString('#FF4444'), // Bright Red
+            'Schuppen': Cesium.Color.fromCssColorString('#4444FF'), // Bright Blue
+            'Gebäude für Sportzwecke': Cesium.Color.fromCssColorString('#44FF44'), // Bright Green
+            'Fabrik': Cesium.Color.fromCssColorString('#FFFF44'), // Bright Yellow
+            'Garage': Cesium.Color.fromCssColorString('#FF44FF'), // Bright Pink
+            'Wohn- und Wirtschaftsgebäude': Cesium.Color.fromCssColorString('#8B4513'), // Brown
+            'Wirtschaftsgebäude': Cesium.Color.fromCssColorString('#FFA500'), // Orange
+            'Wohn- und Geschäftsgebäude': Cesium.Color.fromCssColorString('#800080'), // Purple
+            'Werkstatt': Cesium.Color.fromCssColorString('#00FFFF'), // Cyan
+            'Betriebsgebäude': Cesium.Color.fromCssColorString('#FF69B4'), // Hot Pink
+            'Geschäftsgebäude': Cesium.Color.fromCssColorString('#32CD32'), // Lime Green
+            'Gemeindehaus': Cesium.Color.fromCssColorString('#FFD700'), // Gold
+            'Unbekannt/Andere': Cesium.Color.fromCssColorString('#888888') // Medium Gray
+        };
+
+        // Function to show info box
+        function showInfoBox() {
+            const infoBox = document.getElementById('infoBox');
+            infoBox.style.display = 'block';
+        }
+
+        // Function to hide info box
+        function hideInfoBox() {
+            const infoBox = document.getElementById('infoBox');
+            infoBox.style.display = 'none';
+        }
+
+        // Function to show/hide legend
+        function toggleLegend(show) {
+            const legend = document.getElementById('function-legend');
+            legend.style.display = show ? 'block' : 'none';
+        }
+
+        // Function to update legend with actual German function names found
+        function updateLegend(usedFunctions) {
+            const legendItems = document.getElementById('legend-items');
+            legendItems.innerHTML = '';
+
+            // Only show functions that are actually used
+            usedFunctions.forEach(funcName => {
+                const color = functionColors[funcName] || functionColors['Unbekannt/Andere'];
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${color.toCssColorString()}"></div>
+                    <span>${funcName}</span>
+                `;
+                legendItems.appendChild(legendItem);
+            });
+
+            // Add unknown/other item if there are unknown functions
+            if (usedFunctions.some(func => !functionColors[func])) {
+                const defaultItem = document.createElement('div');
+                defaultItem.className = 'legend-item';
+                defaultItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${functionColors['Unbekannt/Andere'].toCssColorString()}"></div>
+                    <span>Unbekannt/Andere</span>
+                `;
+                legendItems.appendChild(defaultItem);
+            }
+        }
+
+        // Function to update horizontal attribute table with multiple buildings
+        function updateAttributeTable(buildings) {
+            const tableBody = document.getElementById('attribute-table-body');
+            tableBody.innerHTML = '';
+
+            if (!buildings || buildings.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="10" class="no-data">No building data available</td></tr>';
+                return;
+            }
+
+            buildings.forEach(building => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${building.building_function || 'N/A'}</td>
+                    <td>${building.location || 'N/A'}</td>
+                    <td>${building.ground_area_sqm ? `${building.ground_area_sqm} m²` : 'N/A'}</td>
+                    <td>${building.construction_date ? new Date(building.construction_date).toLocaleDateString() : 'N/A'}</td>
+                    <td>${building.parcelid || 'N/A'}</td>
+                    <td>${building.building_id || 'N/A'}</td>
+                    <td>${building.height ? `${building.height} m` : 'N/A'}</td>
+                    <td>${building.lod_id || 'N/A'}</td>
+                    <td>${building.linked || 'N/A'}</td>
+                    <td>${building.street || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Safe function to set feature color
+        function setFeatureColor(feature, color) {
+            try {
+                if (feature && typeof feature.color === 'object' && feature.color !== null) {
+                    feature.color = color;
+                    return true;
+                }
+            } catch (error) {
+                console.warn('Could not set feature color:', error);
+            }
+            return false;
+        }
+
+        // Safe function to reset feature color
+        function resetFeatureColor(feature) {
+            try {
+                if (feature && typeof feature.color === 'object' && feature.color !== null) {
+                    feature.color = undefined;
+                    return true;
+                }
+            } catch (error) {
+                console.warn('Could not reset feature color:', error);
+            }
+            return false;
+        }
+
+        async function main() {
+            const viewer = new Cesium.Viewer('cesiumContainer', {
+                terrain: Cesium.Terrain.fromWorldTerrain(),
+                shadows: false,
+                shouldAnimate: false,
+                timeline: false,
+                animation: false
+            });
+
+            // Fly camera to initial position
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(9.180013, 48.778449, 4000),
+                duration: 2
+            });
+
+            // Add Cesium OSM Buildings
+            const buildingsTileset = await Cesium.createOsmBuildingsAsync();
+            viewer.scene.primitives.add(buildingsTileset);
+
+            let newBuildingTileset = null;
+
+            // Try to load custom building tileset with the new asset ID
+            try {
+                console.log('Loading custom building tileset with asset ID 3316013...');
+                newBuildingTileset = await Cesium.Cesium3DTileset.fromIonAssetId(3316013);
+                viewer.scene.primitives.add(newBuildingTileset);
+
+                // Fly to the new building tileset once it's loaded
+                viewer.flyTo(newBuildingTileset).then(() => {
+                    console.log('Custom building tileset loaded and camera flown to it successfully');
+                    updateAttributeTable([]);
+                    showInfoBox();
+                });
+
+            } catch (error) {
+                console.error('Failed to load custom building tileset:', error);
+                updateAttributeTable([]);
+                showInfoBox();
+
+                // Create a dummy tileset object to prevent errors
+                newBuildingTileset = {
+                    show: true,
+                    tileVisible: { addEventListener: () => { } }
+                };
+            }
+
+            // Store the tileset reference for later use
+            window.tileset = newBuildingTileset;
+
+            // Building toggle button
+            document.querySelector('#toggle-building').onclick = () => {
+                if (newBuildingTileset) {
+                    newBuildingTileset.show = !newBuildingTileset.show;
+                    console.log('Custom buildings visibility:', newBuildingTileset.show);
+                }
+            };
+
+            // SunLight and shadows setup
+            const sunLight = new Cesium.SunLight();
+            viewer.scene.light = sunLight;
+            viewer.shadows = false;
+            viewer.terrainShadows = Cesium.ShadowMode.DISABLED;
+
+            document.querySelector('#toggle-shadows').onclick = () => {
+                if (viewer.shadows) {
+                    viewer.shadows = false;
+                    viewer.terrainShadows = Cesium.ShadowMode.DISABLED;
+                    document.querySelector('#toggle-shadows').textContent = 'Enable shadows';
+                } else {
+                    viewer.shadows = true;
+                    viewer.terrainShadows = Cesium.ShadowMode.RECEIVE_ONLY;
+                    document.querySelector('#toggle-shadows').textContent = 'Disable shadows';
+                }
+            };
+
+            // Color by function button
+            document.querySelector('#color-by-function').onclick = async () => {
+                if (window.isColorByFunctionActive) {
+                    // Turn off color by function
+                    await resetBuildingColors();
+                    window.isColorByFunctionActive = false;
+                    document.querySelector('#color-by-function').textContent = 'Color by Function';
+                    document.querySelector('#color-by-function').style.backgroundColor = '#9C27B0';
+                    toggleLegend(false);
+                    updateAttributeTable([]);
+                    showInfoBox();
+                } else {
+                    // Turn on color by function
+                    await colorBuildingsByFunction();
+                    window.isColorByFunctionActive = true;
+                    document.querySelector('#color-by-function').textContent = 'Reset Colors';
+                    document.querySelector('#color-by-function').style.backgroundColor = '#FF9800';
+                }
+            };
+
+            // Function to reset all building colors to default
+            async function resetBuildingColors() {
+                console.log('Resetting building colors...');
+
+                if (!newBuildingTileset || !newBuildingTileset.tileVisible) {
+                    return;
+                }
+
+                let resetCount = 0;
+                const resetColors = function (tile) {
+                    const content = tile.content;
+                    if (content && content.featuresLength) {
+                        const length = content.featuresLength;
+                        for (let i = 0; i < length; ++i) {
+                            const feature = content.getFeature(i);
+                            if (resetFeatureColor(feature)) {
+                                resetCount++;
+                            }
+                        }
+                    }
+                };
+
+                newBuildingTileset.tileVisible.addEventListener(resetColors);
+
+                // Wait for reset to complete
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                newBuildingTileset.tileVisible.removeEventListener(resetColors);
+
+                // Clear any tracked highlights
+                window.currentHighlightedFeatures = [];
+                window.highlightedFeatureIds.clear();
+
+                viewer.scene.requestRender();
+                console.log(`Reset colors for ${resetCount} buildings`);
+            }
+
+            // Function to color buildings by their function
+            async function colorBuildingsByFunction() {
+                console.log('Coloring buildings by function...');
+
+                // First reset any existing colors
+                await resetBuildingColors();
+
+                // Get all cesium_ids from the tileset
+                const cesiumIdsFromTileset = await getAllCesiumIdsFromTileset();
+                console.log('Coloring', cesiumIdsFromTileset.length, 'buildings by function');
+
+                if (cesiumIdsFromTileset.length === 0) {
+                    console.log('No buildings found to color');
+                    return;
+                }
+
+                // Get building data for all cesium_ids
+                try {
+                    const apiUrl = `http://localhost:3001/synchview?cesium_id=in.(${cesiumIdsFromTileset.map(id => encodeURIComponent(id)).join(',')})`;
+                    const response = await fetch(apiUrl);
+
+                    if (!response.ok) {
+                        console.error('HTTP error:', response.status, response.statusText);
+                        return;
+                    }
+
+                    const buildingData = await response.json();
+                    console.log('Retrieved building data for coloring:', buildingData.length);
+
+                    // Create a mapping of cesium_id to building function
+                    const functionMap = {};
+                    const uniqueFunctions = new Set();
+
+                    buildingData.forEach(building => {
+                        functionMap[building.cesium_id] = building.building_function;
+                        if (building.building_function) {
+                            uniqueFunctions.add(building.building_function);
+                        }
+                    });
+
+                    // Color the buildings
+                    let coloredCount = 0;
+                    const colorBuildings = function (tile) {
+                        const content = tile.content;
+                        if (content && content.featuresLength) {
+                            const length = content.featuresLength;
+                            for (let i = 0; i < length; ++i) {
+                                const feature = content.getFeature(i);
+                                const featureId = feature.getProperty('gml:id') || feature.getProperty('cesium_id');
+
+                                if (featureId) {
+                                    let colorToApply;
+                                    if (functionMap[featureId]) {
+                                        const buildingFunction = functionMap[featureId];
+                                        colorToApply = functionColors[buildingFunction] || functionColors['Unbekannt/Andere'];
+                                    } else {
+                                        // Color unknown functions with default color
+                                        colorToApply = functionColors['Unbekannt/Andere'];
+                                    }
+
+                                    if (setFeatureColor(feature, colorToApply.withAlpha(0.8))) {
+                                        coloredCount++;
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    newBuildingTileset.tileVisible.addEventListener(colorBuildings);
+
+                    // Wait for coloring to complete
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    newBuildingTileset.tileVisible.removeEventListener(colorBuildings);
+
+                    viewer.scene.requestRender();
+                    console.log(`Colored ${coloredCount} buildings by function`);
+
+                    // Update legend with actual German function names found
+                    updateLegend(Array.from(uniqueFunctions));
+                    toggleLegend(true);
+
+                    // Show all colored buildings in the attribute table
+                    updateAttributeTable(buildingData);
+                    showInfoBox();
+
+                } catch (error) {
+                    console.error('Error coloring buildings by function:', error);
+                }
+            }
+
+            // Time slider elements
+            const timeSlider = document.getElementById('time-slider');
+            const timeLabel = document.getElementById('time-label');
+            const datePicker = document.getElementById('date-picker');
+            const setDateButton = document.getElementById('set-date');
+
+            // Set initial date to today
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            datePicker.value = todayStr;
+
+            // Current date for shadow calculations (starts as today)
+            let currentDate = new Date(Date.UTC(
+                today.getUTCFullYear(),
+                today.getUTCMonth(),
+                today.getUTCDate(),
+                0, 0, 0
+            ));
+
+            // Update time label display helper
+            function updateTimeLabel(hourDecimal) {
+                const h = Math.floor(hourDecimal);
+                const m = Math.floor((hourDecimal - h) * 60);
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            }
+
+            // Function to update the viewer's clock time
+            function updateViewerTime(date, hour) {
+                const selectedDateTime = new Date(date);
+                selectedDateTime.setUTCHours(Math.floor(hour));
+                selectedDateTime.setUTCMinutes(Math.floor((hour % 1) * 60));
+
+                viewer.clock.currentTime = Cesium.JulianDate.fromDate(selectedDateTime);
+                viewer.scene.requestRender();
+            }
+
+            // Set initial viewer clock time at 12:00 on current date
+            updateViewerTime(currentDate, 12);
+            timeLabel.textContent = updateTimeLabel(12);
+
+            // On slider input, update the Cesium clock time
+            timeSlider.addEventListener('input', () => {
+                const hour = parseFloat(timeSlider.value);
+                timeLabel.textContent = updateTimeLabel(hour);
+                updateViewerTime(currentDate, hour);
+            });
+
+            // Date picker change handler
+            setDateButton.addEventListener('click', () => {
+                const selectedDate = new Date(datePicker.value);
+                currentDate = new Date(Date.UTC(
+                    selectedDate.getUTCFullYear(),
+                    selectedDate.getUTCMonth(),
+                    selectedDate.getUTCDate(),
+                    0, 0, 0
+                ));
+
+                // Update the time with the current slider value
+                const hour = parseFloat(timeSlider.value);
+                updateViewerTime(currentDate, hour);
+            });
+
+            // Click handler for building information
+            const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+            handler.setInputAction(async function (movement) {
+                const pickedFeature = viewer.scene.pick(movement.position);
+
+                if (!pickedFeature || !pickedFeature.getProperty) {
+                    console.log('Nothing picked');
+                    updateAttributeTable([]);
+                    showInfoBox();
+                    return;
+                }
+
+                let gmlId = pickedFeature.getProperty('gml:id') || pickedFeature.getProperty('cesium_id');
+                if (!gmlId) {
+                    for (const propName of pickedFeature.getPropertyNames()) {
+                        if (propName.toLowerCase().includes('gml:id') || propName.toLowerCase().includes('cesium_id')) {
+                            gmlId = pickedFeature.getProperty(propName);
+                            break;
+                        }
+                    }
+                }
+
+                console.log('Clicked building gml:id:', gmlId);
+                if (!gmlId) {
+                    updateAttributeTable([]);
+                    showInfoBox();
+                    return;
+                }
+
+                const apiUrl = `http://localhost:3001/synchview?cesium_id=eq.${encodeURIComponent(gmlId)}`;
+                console.log('Fetching:', apiUrl);
+
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        console.error('HTTP error:', response.status, response.statusText);
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return;
+                    }
+                    const data = await response.json();
+                    console.log('API data:', data);
+
+                    if (data.length > 0) {
+                        updateAttributeTable(data);
+                        showInfoBox();
+                    } else {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    updateAttributeTable([]);
+                    showInfoBox();
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            // Search functionality
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const clearHighlightsButton = document.getElementById('clear-highlights');
+
+            // Function to clear all highlights and reset filter count
+            function clearHighlights() {
+                console.log('Clearing all highlights...');
+
+                // Reset all highlighted features to default color
+                window.currentHighlightedFeatures.forEach(feature => {
+                    try {
+                        resetFeatureColor(feature);
+                    } catch (error) {
+                        console.warn('Error resetting feature color:', error);
+                    }
+                });
+
+                // Clear the tracking arrays
+                window.currentHighlightedFeatures = [];
+                window.highlightedFeatureIds.clear();
+
+                // Update UI
+                updateAttributeTable([]);
+                showInfoBox();
+
+                // Refresh the view
+                viewer.scene.requestRender();
+
+                console.log('Highlights cleared successfully');
+            }
+
+            // Clear highlights button click handler
+            clearHighlightsButton.addEventListener('click', clearHighlights);
+
+            // Function to highlight a building by its LoD ID
+            async function highlightBuildingByLodId(lodId) {
+                try {
+                    // First, clear any previous highlights
+                    clearHighlights();
+
+                    // Query your API to get the building info
+                    const apiUrl = `http://localhost:3001/synchview?lod_id=eq.${encodeURIComponent(lodId)}`;
+                    const response = await fetch(apiUrl);
+
+                    if (!response.ok) {
+                        console.error('HTTP error:', response.status, response.statusText);
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return null;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.length === 0) {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return null;
+                    }
+
+                    const buildingInfo = data[0];
+                    const cesiumId = buildingInfo.cesium_id;
+
+                    // Now find the building in the tileset
+                    const features = [];
+
+                    // Only try to find features if we have a valid tileset
+                    if (newBuildingTileset && newBuildingTileset.tileVisible) {
+                        const featureCollector = function (tile) {
+                            const content = tile.content;
+                            if (content && content.featuresLength) {
+                                const length = content.featuresLength;
+
+                                for (let i = 0; i < length; ++i) {
+                                    const feature = content.getFeature(i);
+                                    const featureId = feature.getProperty('gml:id') || feature.getProperty('cesium_id');
+
+                                    if (featureId === cesiumId) {
+                                        features.push(feature);
+                                    }
+                                }
+                            }
+                        };
+
+                        newBuildingTileset.tileVisible.addEventListener(featureCollector);
+
+                        // Wait for the features to be collected
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+
+                        // Remove the event listener
+                        newBuildingTileset.tileVisible.removeEventListener(featureCollector);
+                    }
+
+                    if (features.length === 0) {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return null;
+                    }
+
+                    // Highlight the building by changing its color
+                    features.forEach(feature => {
+                        if (setFeatureColor(feature, Cesium.Color.RED.withAlpha(0.8))) {
+                            window.highlightedFeatureIds.add(feature.getProperty('gml:id') || feature.getProperty('cesium_id'));
+                        }
+                    });
+
+                    // Store the highlighted features
+                    window.currentHighlightedFeatures = features;
+
+                    // Try to get the bounding sphere of the building and fly to it
+                    try {
+                        if (features[0].contentBoundingSphere) {
+                            const boundingSphere = features[0].contentBoundingSphere;
+                            viewer.camera.flyToBoundingSphere(boundingSphere, {
+                                duration: 1.5,
+                                offset: new Cesium.HeadingPitchRange(0, -0.5, boundingSphere.radius * 2.0)
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Could not fly to building:', e);
+                    }
+
+                    // Update attribute table with building info
+                    updateAttributeTable(data);
+                    showInfoBox();
+
+                    return features;
+                } catch (error) {
+                    console.error('Error highlighting building:', error);
+                    updateAttributeTable([]);
+                    showInfoBox();
+                    return null;
+                }
+            }
+
+            // Search button click handler
+            searchButton.addEventListener('click', async () => {
+                const lodId = searchInput.value.trim();
+                if (!lodId) {
+                    updateAttributeTable([]);
+                    showInfoBox();
+                    return;
+                }
+
+                await highlightBuildingByLodId(lodId);
+            });
+
+            // Allow searching by pressing Enter
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+
+            // Function to get all cesium_ids from the visible tileset
+            async function getAllCesiumIdsFromTileset() {
+                return new Promise((resolve) => {
+                    const cesiumIds = new Set();
+
+                    if (!newBuildingTileset || !newBuildingTileset.tileVisible) {
+                        resolve([]);
+                        return;
+                    }
+
+                    const collector = function (tile) {
+                        const content = tile.content;
+                        if (content && content.featuresLength) {
+                            const length = content.featuresLength;
+                            for (let i = 0; i < length; ++i) {
+                                const feature = content.getFeature(i);
+                                const featureId = feature.getProperty('gml:id') || feature.getProperty('cesium_id');
+                                if (featureId) {
+                                    cesiumIds.add(featureId);
+                                }
+                            }
+                        }
+                    };
+
+                    newBuildingTileset.tileVisible.addEventListener(collector);
+
+                    // Wait for collection
+                    setTimeout(() => {
+                        newBuildingTileset.tileVisible.removeEventListener(collector);
+                        resolve(Array.from(cesiumIds));
+                    }, 2000);
+                });
+            }
+
+            // Function to apply filters to buildings (only from Cesium Ion set)
+            async function applyBuildingFilters() {
+                // Get filter values
+                const functionFilter = document.getElementById('function-filter').value;
+                const areaMin = document.getElementById('area-min').value;
+                const areaMax = document.getElementById('area-max').value;
+                const yearMin = document.getElementById('year-min').value;
+                const yearMax = document.getElementById('year-max').value;
+
+                // First clear any existing highlights
+                clearHighlights();
+
+                try {
+                    // Get all cesium_ids from the tileset first
+                    const cesiumIdsFromTileset = await getAllCesiumIdsFromTileset();
+                    console.log('Cesium IDs from tileset:', cesiumIdsFromTileset.length);
+
+                    if (cesiumIdsFromTileset.length === 0) {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return;
+                    }
+
+                    // Build the API query URL with filters AND cesium_id restriction
+                    let apiUrl = 'http://localhost:3001/synchview?';
+                    const params = [];
+
+                    // Add cesium_id filter to only include buildings from the tileset
+                    params.push(`cesium_id=in.(${cesiumIdsFromTileset.map(id => encodeURIComponent(id)).join(',')})`);
+
+                    // Add other filters
+                    if (functionFilter) params.push(`building_function=eq.${encodeURIComponent(functionFilter)}`);
+                    if (areaMin) params.push(`ground_area_sqm=gte.${areaMin}`);
+                    if (areaMax) params.push(`ground_area_sqm=lte.${areaMax}`);
+                    if (yearMin) params.push(`construction_date=gte.${yearMin}-01-01`);
+                    if (yearMax) params.push(`construction_date=lte.${yearMax}-12-31`);
+
+                    apiUrl += params.join('&');
+                    console.log('Fetching filtered buildings (tileset only):', apiUrl);
+
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        console.error('HTTP error:', response.status, response.statusText);
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return;
+                    }
+
+                    const data = await response.json();
+                    console.log('Filtered buildings from tileset:', data.length);
+
+                    if (data.length === 0) {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return;
+                    }
+
+                    // Collect all matching features from tileset
+                    const features = [];
+                    const cesiumIds = data.map(building => building.cesium_id);
+
+                    // Only try to find features if we have a valid tileset
+                    if (newBuildingTileset && newBuildingTileset.tileVisible) {
+                        const featureCollector = function (tile) {
+                            const content = tile.content;
+                            if (content && content.featuresLength) {
+                                const length = content.featuresLength;
+
+                                for (let i = 0; i < length; ++i) {
+                                    const feature = content.getFeature(i);
+                                    const featureId = feature.getProperty('gml:id') || feature.getProperty('cesium_id');
+
+                                    if (cesiumIds.includes(featureId)) {
+                                        features.push(feature);
+                                        window.highlightedFeatureIds.add(featureId);
+                                    }
+                                }
+                            }
+                        };
+
+                        newBuildingTileset.tileVisible.addEventListener(featureCollector);
+
+                        // Wait for features to be collected
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+
+                        // Remove the event listener
+                        newBuildingTileset.tileVisible.removeEventListener(featureCollector);
+                    }
+
+                    if (features.length === 0) {
+                        updateAttributeTable([]);
+                        showInfoBox();
+                        return;
+                    }
+
+                    // Highlight all matching buildings
+                    features.forEach(feature => {
+                        setFeatureColor(feature, Cesium.Color.YELLOW.withAlpha(0.8));
+                    });
+
+                    // Store highlighted features for later clearing
+                    window.currentHighlightedFeatures = features;
+
+                    // Show all matching buildings in attribute table
+                    updateAttributeTable(data);
+                    showInfoBox();
+
+                    // Refresh the view to ensure highlights are visible
+                    viewer.scene.requestRender();
+
+                    // Optionally fly to the first matching building - with error handling
+                    if (features.length > 0) {
+                        try {
+                            const boundingSphere = features[0].contentBoundingSphere;
+                            if (boundingSphere && boundingSphere.radius) {
+                                viewer.camera.flyToBoundingSphere(boundingSphere, {
+                                    duration: 2,
+                                    offset: new Cesium.HeadingPitchRange(0, -0.5, boundingSphere.radius * 3.0)
+                                });
+                            }
+                        } catch (e) {
+                            console.warn('Could not fly to building:', e);
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error applying filters:', error);
+                    updateAttributeTable([]);
+                    showInfoBox();
+                }
+            }
+
+            // Function to reset all filters
+            function resetFilters() {
+                document.getElementById('function-filter').value = '';
+                document.getElementById('area-min').value = '';
+                document.getElementById('area-max').value = '';
+                document.getElementById('year-min').value = '';
+                document.getElementById('year-max').value = '';
+                clearHighlights();
+                updateAttributeTable([]);
+                showInfoBox();
+                viewer.scene.requestRender();
+            }
+
+            // Add event listeners for filters
+            document.getElementById('apply-filters').addEventListener('click', applyBuildingFilters);
+            document.getElementById('reset-filters').addEventListener('click', resetFilters);
+
+            // Pre-populate building function dropdown with actual German values from the database
+            async function populateBuildingFunctions() {
+                try {
+                    const response = await fetch('http://localhost:3001/synchview?select=building_function&building_function=not.is.null');
+                    if (!response.ok) return;
+
+                    const data = await response.json();
+                    const uniqueFunctions = [...new Set(data.map(item => item.building_function))].sort();
+
+                    const select = document.getElementById('function-filter');
+                    // Keep the first option ("All Functions")
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+
+                    uniqueFunctions.forEach(func => {
+                        const option = new Option(func, func);
+                        select.add(option);
+                    });
+                } catch (error) {
+                    console.error('Error fetching building functions:', error);
+                }
+            }
+
+            // Call this when the page loads
+            populateBuildingFunctions();
+
+            // Initialize the global arrays
+            window.currentHighlightedFeatures = [];
+            window.highlightedFeatureIds = new Set();
+
+            // Show info box on startup
+            showInfoBox();
+        }
+
+        main().catch(error => {
+            console.error('Application failed to start:', error);
+            updateAttributeTable([]);
+            showInfoBox();
+        });
+    </script>
+</body>
+
+</html>

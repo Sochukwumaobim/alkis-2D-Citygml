@@ -1,0 +1,25 @@
+html,
+body {
+  overflow: hidden;
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+}
+#cesiumContainer {
+  height: 100%;
+}
+
+/* Add styles for the info panel */
+#info-panel h3, #info-panel h4 {
+  margin-top: 0;
+  color: #d8d1d1;
+}
+
+#info-panel p {
+  margin: 5px 0;
+  line-height: 1.4;
+}
+
+#info-panel strong {
+  color: #eceaea;
+}
